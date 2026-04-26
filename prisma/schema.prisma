@@ -1,0 +1,271 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- 1. ENUMS ---
+
+enum PlanStatus {
+  WAITING_APPROVAL
+  APPROVE
+  REJECT
+}
+
+enum WOStatus {
+  TO_DO
+  ON_PROGRESS
+  DONE
+}
+
+enum PalletStatus {
+  AVAILABLE
+  SHIPPED
+}
+
+enum RoleName {
+  ADMIN
+  SUPERVISOR
+  OPERATOR
+  BOD
+}
+
+// --- 2. MANAJEMEN PENGGUNA (Sesuai Screenshot 225104) ---
+
+model Role {
+  id_role   Int        @id @default(autoincrement())
+  nama_role String     @db.VarChar(50)
+  users     User[]
+  menus     RoleMenu[]
+
+  @@map("roles")
+}
+
+model User {
+  id_user    Int      @id @default(autoincrement())
+  id_role    Int
+  nama       String   @db.VarChar(100) // Di gambar: nama (bukan name)
+  email      String   @unique @db.VarChar(100)
+  password   String   @db.VarChar(225) // Di gambar: VARCHAR(225)
+  created_at DateTime @default(now())
+  
+  role       Role     @relation(fields: [id_role], references: [id_role])
+
+  inbound_plans  InboundPlan[]
+  outbound_plans OutboundPlan[]
+  work_orders    WorkOrder[]
+  scans          RfidScan[]
+
+  @@map("users")
+}
+
+model Menu {
+  id_menu   Int        @id @default(autoincrement())
+  nama_menu String     @db.VarChar(50)
+  roles     RoleMenu[]
+
+  @@map("menu")
+}
+
+model RoleMenu {
+  id_role_menu Int    @id @default(autoincrement()) // Di gambar ada PK id_role_menu
+  id_menu      Int
+  id_role      Int
+  
+  menu         Menu   @relation(fields: [id_menu], references: [id_menu])
+  role         Role   @relation(fields: [id_role], references: [id_role])
+
+  @@map("roles_menus")
+}
+
+// --- 3. MASTER DATA ---
+
+model Factory {
+  id_factory      Int                 @id @default(autoincrement())
+  factory_number  String              @db.VarChar(10)
+  factory_email   String              @db.VarChar(50)
+  factory_name    String              @db.VarChar(50)
+  factory_address String              @db.Text
+  plan_details    InboundPlanDetail[]
+
+  @@map("factory")
+}
+
+model Destination {
+  destination_number  String @db.VarChar(10)
+  destination_email   String @db.VarChar(50)
+  destination_name    String @db.VarChar(50)
+  destination_address String @db.Text
+  id_destination      Int    @id @default(autoincrement())
+
+  plan_details OutboundPlanDetail[]
+
+  @@map("destination")
+}
+
+model PalletType {
+  id_pallet_type  Int                  @id @default(autoincrement())
+  pallet_category String               @db.VarChar(50)
+  pallet_name     String               @db.VarChar(100)
+  pallets         Pallet[]
+  inbound_details InboundPlanDetail[]
+  outbound_details OutboundPlanDetail[]
+  wo_details      WorkOrderDetail[]
+
+  @@map("pallet_type")
+}
+
+model WarehouseArea {
+  id_warehouse_area     Int          @id @default(autoincrement())
+  warehouse_area_number String       @db.VarChar(20)
+  warehouse_area_name   String       @db.VarChar(100)
+  storage_bins          StorageBin[]
+  work_orders           WorkOrder[]
+
+  @@map("warehouse_area")
+}
+
+model StorageBin {
+  id_storage_bins   Int           @id @default(autoincrement()) // Nama PK sesuai gambar
+  id_warehouse_area Int
+  bin_number        String        @db.VarChar(50) // Nama kolom sesuai gambar
+  max_quantity      Int
+  stock             Int
+  
+  warehouse_area    WarehouseArea @relation(fields: [id_warehouse_area], references: [id_warehouse_area])
+  wo_details        WorkOrderDetail[]
+
+  @@map("storage_bins")
+}
+
+// --- 4. ASET (PALLET) ---
+
+model Pallet {
+  id_pallet      Int          @id @default(autoincrement())
+  id_pallet_type Int
+  rfid_tag       String       @unique @db.VarChar(50) // Panjang 50 sesuai gambar
+  location       String?      @db.VarChar(100)
+  status         String?      @db.VarChar(100)
+  
+  pallet_type    PalletType   @relation(fields: [id_pallet_type], references: [id_pallet_type])
+  scans          RfidScan[]
+
+  @@map("pallet")
+}
+
+// --- 5. TRANSAKSI ---
+
+model InboundPlan {
+  id_inbound_plan Int                 @id @default(autoincrement())
+  id_user         Int
+  document_number String              @db.VarChar(10)
+  planning_month  DateTime            @db.Date
+  status          String?             @db.VarChar(100)
+  remarks         String?             @db.Text
+  created_at      DateTime            @default(now())
+  
+  user            User                @relation(fields: [id_user], references: [id_user])
+  details         InboundPlanDetail[]
+  work_orders     WorkOrder[]
+
+  @@map("inbound_plan")
+}
+
+model InboundPlanDetail {
+  id_detail       Int         @id @default(autoincrement())
+  id_inbound_plan Int
+  id_pallet_type  Int
+  id_factory      Int
+  quantity        Int
+  
+  plan            InboundPlan @relation(fields: [id_inbound_plan], references: [id_inbound_plan])
+  pallet_type     PalletType  @relation(fields: [id_pallet_type], references: [id_pallet_type])
+  factory         Factory     @relation(fields: [id_factory], references: [id_factory])
+
+  @@map("inbound_plan_detail")
+}
+
+model OutboundPlan {
+  id_outbound_plan Int                  @id @default(autoincrement())
+  id_user          Int
+  document_number  String               @db.VarChar(10)
+  planning_month   DateTime             @db.Date
+  status           String?              @db.VarChar(100)
+  remarks          String?              @db.Text
+  created_at       DateTime             @default(now())
+  
+  user             User                 @relation(fields: [id_user], references: [id_user])
+  details          OutboundPlanDetail[]
+  work_orders      WorkOrder[]
+
+  @@map("outbound_plan")
+}
+
+model OutboundPlanDetail {
+  id_detail        Int          @id @default(autoincrement())
+  id_outbound_plan Int
+  id_pallet_type   Int
+  id_destination   Int
+  quantity         Int
+  
+  plan             OutboundPlan @relation(fields: [id_outbound_plan], references: [id_outbound_plan])
+  pallet_type      PalletType   @relation(fields: [id_pallet_type], references: [id_pallet_type])
+  destination      Destination  @relation(fields: [id_destination], references: [id_destination])
+
+  @@map("outbound_plan_detail")
+}
+
+model WorkOrder {
+  id_work_order       Int               @id @default(autoincrement())
+  id_outbound_plan    Int?
+  id_inbound_plan     Int?
+  id_warehouse_area   Int
+  id_user             Int
+  work_order_number   String            @db.VarChar(10)
+  work_order_category String            @db.VarChar(20)
+  transfer_point      String?           @db.VarChar(100)
+  date                DateTime          @db.Date
+  remarks             String?           @db.Text
+  status              String?           @db.VarChar(100)
+  
+  outbound_plan       OutboundPlan?     @relation(fields: [id_outbound_plan], references: [id_outbound_plan])
+  inbound_plan        InboundPlan?      @relation(fields: [id_inbound_plan], references: [id_inbound_plan])
+  warehouse_area      WarehouseArea     @relation(fields: [id_warehouse_area], references: [id_warehouse_area])
+  user                User              @relation(fields: [id_user], references: [id_user])
+  
+  details             WorkOrderDetail[]
+  scans               RfidScan[]
+
+  @@map("work_order")
+}
+
+model WorkOrderDetail {
+  id_work_order_detail Int        @id @default(autoincrement())
+  id_work_order        Int
+  id_pallet_type       Int
+  id_storage_bins      Int
+  total_planning       Int
+  actual_pcs           Int
+  
+  work_order           WorkOrder  @relation(fields: [id_work_order], references: [id_work_order])
+  pallet_type          PalletType @relation(fields: [id_pallet_type], references: [id_pallet_type])
+  storage_bins         StorageBin @relation(fields: [id_storage_bins], references: [id_storage_bins])
+
+  @@map("work_order_detail")
+}
+
+model RfidScan {
+  id_scan       Int      @id @default(autoincrement())
+  id_pallet     Int
+  id_work_order Int
+  id_user       Int
+  scanned_at    DateTime @default(now())
+  
+  pallet        Pallet    @relation(fields: [id_pallet], references: [id_pallet])
+  work_order    WorkOrder @relation(fields: [id_work_order], references: [id_work_order])
+  user          User      @relation(fields: [id_user], references: [id_user])
+
+  @@map("rfid_scan")
+}
