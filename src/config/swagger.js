@@ -1,15 +1,13 @@
 const swaggerJSDoc = require('swagger-jsdoc');
+const path = require('path'); // <-- 1. Tambahkan ini di paling atas
 
 const options = {
   definition: {
-    openapi: '3.0.0', // Versi OpenAPI standar
+    openapi: '3.0.0',
     info: {
       title: 'WMS API Documentation',
       version: '1.0.0',
       description: 'Dokumentasi API untuk Warehouse Management System (WMS)',
-      contact: {
-        name: 'WMS Project Team',
-      },
     },
     servers: [
       {
@@ -17,7 +15,6 @@ const options = {
         description: 'Development Server',
       },
     ],
-    // Konfigurasi ini PENTING karena sistem WMS kamu pakai JWT!
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -33,8 +30,9 @@ const options = {
       },
     ],
   },
-  // Memberitahu Swagger di mana letak komentar dokumentasi kita
-  apis: ['./src/routes/*.js'], 
+  
+  apis: [path.join(__dirname, '../routes/*.js')], 
+  
 };
 
 const swaggerSpec = swaggerJSDoc(options);
