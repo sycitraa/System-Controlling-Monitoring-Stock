@@ -38,3 +38,8 @@ untuk API Dokumentasi untuk frontend bisa diakses di URL berikut
 ```bash
 localhost:3000/api-docs
 ```
+----------------------------------------------------------------------------------------------------------------------------
+
+## ⚠️⚠️ WARNING JANGAN PERNAH MENGGANTI UNTUK SETTINGAN DEPENDENCIES DAN JUGA PRISMA pada file package.json dan juga prisma/schema.prisma ⚠️⚠️##
+
+----------------------------------------------------------------------------------------------------------------------------
