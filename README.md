@@ -1,103 +1,40 @@
-# 📦 WMS JMP Backend
-
-Backend system untuk **Warehouse Management System (WMS)** berbasis Express.js.
-
----
-
-## 🚀 Cara Menjalankan Project (WAJIB UNTUK TIM)
-
-Ikuti langkah berikut setelah clone / pull project:
-
----
-
-## 1️⃣ Clone Repository
+## 1. CLONE REPOSITORY
 
 ```bash
-git https://github.com/sycitraa/System-Controlling-Monitoring-Stock.git
+git https://github.com/sycitraa/WMS-BE.git
 ```
 
----
-
-## 2️⃣ Install Dependencies
+## 2. NPM INSTALL (INSTAL NODE MODULE)
 
 ```bash
 npm install
 ```
 
----
+## 3. COPY FILE .env.example menjadi file .env pada branch main
 
-## 3️⃣ Setup Environment Variable
-
-Buat file `.env` di root project:
-
-```env
-PORT=3000
-JWT_SECRET=your_secret_key
+```bash
+cp .env.example .env
 ```
 
----
+## 4. PASTIKAN SUDAH MENGINSTALL POSTGRESQL dan MENYELESAIKAN SEMUA KONFIGURASI
 
-## 4️⃣ Jalankan Project
+jika sudah sesuaikan kode untuk konfigurasi DATABASE pada file .env, sesuaikan dengan konfigurasi database postgre masing masing seperti username dan password
 
-### Development Mode
+## 5. GENERATE PRISMA (DATABASE)
+
+```bash
+npx prisma generate
+```
+## 6. JALANKAN SERVER NYA
 
 ```bash
 npm run dev
 ```
 
-### Production Mode
+## 7. API-DOCS
+
+untuk API Dokumentasi untuk frontend bisa diakses di URL berikut
 
 ```bash
-npm start
+localhost:3000/api-docs
 ```
-
----
-
-## 5️⃣ Akses Server
-
-Buka di browser / Postman:
-
-```
-http://localhost:3000
-```
-
----
-
-## 🏗️ Struktur Project
-
-```bash
-src/
-├── controllers/
-├── middlewares/
-├── routes/
-├── services/
-├── utils/
-├── app.js
-```
-
----
-
-## 📌 Catatan Penting
-
-* Jangan commit file `.env`
-* Gunakan `.env.example` sebagai referensi
-* Pastikan Node.js sudah terinstall
-
----
-
-## 🛠️ Tech Stack
-
-* Node.js
-* Express.js
-
----
-
-## 👨‍💻 Developer
-
-Tim WMS JMP - D3 Teknik Informatika UNS
-
----
-
-## 📌 Status
-
-🚧 Development (MVP Phase)
