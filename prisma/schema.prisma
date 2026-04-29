@@ -32,7 +32,7 @@ enum RoleName {
   BOD
 }
 
-// --- 2. MANAJEMEN PENGGUNA (Sesuai Screenshot 225104) ---
+// --- 2. MANAJEMEN PENGGUNA
 
 model Role {
   id_role   Int        @id @default(autoincrement())
