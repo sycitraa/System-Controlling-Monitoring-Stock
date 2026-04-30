@@ -1,5 +1,5 @@
 require('dotenv').config(); 
-const prisma = require('../src/config/prisma');
+const prisma = require('../src/config/prisma'); // Sesuaikan path jika berbeda
 const bcrypt = require('bcryptjs');
 
 async function main() {
@@ -8,152 +8,152 @@ async function main() {
   // ---------------------------------------------------------
   // 1. MASTER ROLE
   // ---------------------------------------------------------
-  const rolesData = [
-    { id_role: 1, nama_role: 'ADMIN' },
-    { id_role: 2, nama_role: 'SUPERVISOR' },
-    { id_role: 3, nama_role: 'OPERATOR' },
-    { id_role: 4, nama_role: 'BOD' },
-  ];
-  for (const role of rolesData) {
-    await prisma.role.upsert({
-      where: { id_role: role.id_role },
-      update: {},
-      create: role,
-    });
+  const rolesData = ['ADMIN', 'SUPERVISOR', 'OPERATOR', 'BOD'];
+  const roleMap = {}; // Untuk menyimpan ID dinamis yang dihasilkan DB
+
+  for (const roleName of rolesData) {
+    let role = await prisma.role.findFirst({ where: { nama_role: roleName } });
+    if (!role) {
+      // Biarkan DB yang membuatkan id_role secara otomatis
+      role = await prisma.role.create({ data: { nama_role: roleName } });
+    }
+    roleMap[roleName] = role.id_role; // Simpan ID-nya untuk dipakai di tabel User
   }
   console.log('✅ Master Role berhasil di-seed');
 
   // ---------------------------------------------------------
-  // 2. MASTER USER (Sesuai Sheet1: OP 1 & Tambahan Admin)
+  // 2. MASTER USER
   // ---------------------------------------------------------
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash('password123', salt); // Default password
+  const hashedPassword = await bcrypt.hash('password123', salt);
 
   const usersData = [
     {
-      id_user: 1,
       nama: 'Super Admin',
       email: 'admin@wms.com',
       password: hashedPassword,
-      id_role: 1, // ADMIN
+      id_role: roleMap['ADMIN'], // Ambil ID dinamis dari map di atas
     },
     {
-      id_user: 2,
-      nama: 'OP 1', // Sesuai master data
+      nama: 'OP 1',
       email: 'op1@example.com',
       password: hashedPassword,
-      id_role: 3, // OPERATOR
+      id_role: roleMap['OPERATOR'], 
     }
   ];
+
   for (const user of usersData) {
-    await prisma.user.upsert({
-      where: { email: user.email },
-      update: {},
-      create: user,
-    });
+    const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
+    if (!existingUser) {
+      await prisma.user.create({ data: user });
+    }
   }
   console.log('✅ Master User berhasil di-seed');
 
   // ---------------------------------------------------------
-  // 3. MASTER PALLET TYPE (Kombinasi Kategori & Nama dari Sheet1)
+  // 3. MASTER PALLET TYPE
   // ---------------------------------------------------------
   const palletTypesData = [
-    { id_pallet_type: 1, pallet_category: 'Standard', pallet_name: 'T1B' },
-    { id_pallet_type: 2, pallet_category: 'Standard', pallet_name: 'T1F' },
-    { id_pallet_type: 3, pallet_category: 'Module+Inner', pallet_name: 'T1X' },
-    { id_pallet_type: 4, pallet_category: 'EG', pallet_name: 'SP1' },
-    { id_pallet_type: 5, pallet_category: 'RR Box', pallet_name: 'SP2' },
+    { pallet_category: 'Standard', pallet_name: 'T1B' },
+    { pallet_category: 'Standard', pallet_name: 'T1F' },
+    { pallet_category: 'Module+Inner', pallet_name: 'T1X' },
+    { pallet_category: 'EG', pallet_name: 'SP1' },
+    { pallet_category: 'RR Box', pallet_name: 'SP2' },
   ];
+  
+  const ptMap = {};
   for (const pt of palletTypesData) {
-    await prisma.palletType.upsert({
-      where: { id_pallet_type: pt.id_pallet_type },
-      update: {},
-      create: pt,
-    });
+    // Kita cari berdasarkan pallet_name
+    let type = await prisma.palletType.findFirst({ where: { pallet_name: pt.pallet_name } });
+    if (!type) {
+      type = await prisma.palletType.create({ data: pt });
+    }
+    ptMap[pt.pallet_name] = type.id_pallet_type; // Simpan ID
   }
   console.log('✅ Master Pallet Type berhasil di-seed');
 
   // ---------------------------------------------------------
   // 4. MASTER FACTORY & DESTINATION
   // ---------------------------------------------------------
-  await prisma.factory.upsert({
-    where: { id_factory: 1 },
-    update: {},
-    create: {
-      id_factory: 1,
-      factory_name: 'PT TKN',
-      factory_number: 'F-001',
-      factory_email: 'tkn@example.com',
-      factory_address: 'Kawasan Industri Terpadu Indonesia China, Jl, KITIC, Kec. Serang Baru, Kabupaten Bekasi, Jawa Barat 17330',
-    },
-  });
-  
-  await prisma.destination.upsert({
-    where: { id_destination: 1 },
-    update: {},
-    create: {
-      id_destination: 1,
-      destination_name: 'PT Toyota Motor Manufacturing Indonesia',
-      destination_number: 'D-001',
-      destination_email: 'tmmin@example.com',
-      destination_address: 'Jalan Laksda Yos Sudarso Sunter 1, RT.2/RW.9, Sunter Jaya, Kec. Tj. Priok, Jkt Utara, Daerah Khusus Ibukota Jakarta 14350',
-    },
-  });
+  let factory = await prisma.factory.findFirst({ where: { factory_number: 'F-001' } });
+  if (!factory) {
+    await prisma.factory.create({
+      data: {
+        factory_name: 'PT TKN',
+        factory_number: 'F-001',
+        factory_email: 'tkn@example.com',
+        factory_address: 'Kawasan Industri Terpadu Indonesia China, Jl, KITIC, Kec. Serang Baru, Kabupaten Bekasi, Jawa Barat 17330',
+      },
+    });
+  }
+
+  let destination = await prisma.destination.findFirst({ where: { destination_number: 'D-001' } });
+  if (!destination) {
+    await prisma.destination.create({
+      data: {
+        destination_name: 'PT Toyota Motor Manufacturing Indonesia',
+        destination_number: 'D-001',
+        destination_email: 'tmmin@example.com',
+        destination_address: 'Jalan Laksda Yos Sudarso Sunter 1, RT.2/RW.9, Sunter Jaya, Kec. Tj. Priok, Jkt Utara, Daerah Khusus Ibukota Jakarta 14350',
+      },
+    });
+  }
   console.log('✅ Master Factory & Destination berhasil di-seed');
 
   // ---------------------------------------------------------
   // 5. MASTER WAREHOUSE AREA
   // ---------------------------------------------------------
   const areasData = [
-    { id_warehouse_area: 1, warehouse_area_number: 'WH-AREA-001', warehouse_area_name: 'Transit Incoming Area' },
-    { id_warehouse_area: 2, warehouse_area_number: 'WH-AREA-002', warehouse_area_name: 'Quarantine Area' },
-    { id_warehouse_area: 3, warehouse_area_number: 'WH-AREA-003', warehouse_area_name: 'Central Store Area' },
-    { id_warehouse_area: 4, warehouse_area_number: 'WH-AREA-004', warehouse_area_name: 'Delivery Area' }, // Tambahan menyesuaikan teks contoh data
+    { warehouse_area_number: 'WH-AREA-001', warehouse_area_name: 'Transit Incoming Area' },
+    { warehouse_area_number: 'WH-AREA-002', warehouse_area_name: 'Quarantine Area' },
+    { warehouse_area_number: 'WH-AREA-003', warehouse_area_name: 'Central Store Area' },
+    { warehouse_area_number: 'WH-AREA-004', warehouse_area_name: 'Delivery Area' }, 
   ];
+  
+  const areaMap = {};
   for (const area of areasData) {
-    await prisma.warehouseArea.upsert({
-      where: { id_warehouse_area: area.id_warehouse_area },
-      update: {},
-      create: area,
-    });
+    let existingArea = await prisma.warehouseArea.findFirst({ where: { warehouse_area_number: area.warehouse_area_number } });
+    if (!existingArea) {
+      existingArea = await prisma.warehouseArea.create({ data: area });
+    }
+    areaMap[area.warehouse_area_number] = existingArea.id_warehouse_area; // Simpan ID
   }
   console.log('✅ Master Warehouse Area berhasil di-seed');
 
   // ---------------------------------------------------------
   // 6. MASTER STORAGE BIN
   // ---------------------------------------------------------
-  // Mengacu pada Sheet1: 001-01 / 001-02 / 001-03 (Kita pasang di WH-AREA-001)
   const binsData = [
-    { id_storage_bins: 1, id_warehouse_area: 1, bin_number: '001-01', max_quantity: 50, stock: 0 },
-    { id_storage_bins: 2, id_warehouse_area: 1, bin_number: '001-02', max_quantity: 50, stock: 0 },
-    { id_storage_bins: 3, id_warehouse_area: 1, bin_number: '001-03', max_quantity: 50, stock: 0 },
+    { id_warehouse_area: areaMap['WH-AREA-001'], bin_number: '001-01', max_quantity: 50, stock: 0 },
+    { id_warehouse_area: areaMap['WH-AREA-001'], bin_number: '001-02', max_quantity: 50, stock: 0 },
+    { id_warehouse_area: areaMap['WH-AREA-001'], bin_number: '001-03', max_quantity: 50, stock: 0 },
   ];
+
   for (const bin of binsData) {
-    await prisma.storageBin.upsert({
-      where: { id_storage_bins: bin.id_storage_bins },
-      update: {},
-      create: bin,
-    });
+    let existingBin = await prisma.storageBin.findFirst({ where: { bin_number: bin.bin_number } });
+    if (!existingBin) {
+      await prisma.storageBin.create({ data: bin });
+    }
   }
   console.log('✅ Master Storage Bin berhasil di-seed');
 
   // ---------------------------------------------------------
   // 7. MASTER PALLET (Aset RFID)
   // ---------------------------------------------------------
-  await prisma.pallet.upsert({
-    where: { rfid_tag: '300833B2DDD9014000000001' }, // ID Tag sesuai Sheet1
-    update: {},
-    create: {
-      id_pallet: 1,
-      id_pallet_type: 1, // Pasang ke Tipe Standard T1B
-      rfid_tag: '300833B2DDD9014000000001',
-      location: 'WH-AREA-001', // Lokasi Awal
-      status: 'AVAILABLE'
-    },
-  });
+  let pallet = await prisma.pallet.findUnique({ where: { rfid_tag: '300833B2DDD9014000000001' } });
+  if (!pallet) {
+    await prisma.pallet.create({
+      data: {
+        id_pallet_type: ptMap['T1B'], // Relasikan otomatis ke Pallet Type T1B
+        rfid_tag: '300833B2DDD9014000000001',
+        location: 'WH-AREA-001', 
+        status: 'AVAILABLE'
+      },
+    });
+  }
   console.log('✅ Master Pallet (RFID) berhasil di-seed');
 
-  console.log('🎉 Seeding Selesai! Seluruh data Master sukses diinput ke PostgreSQL.');
+  console.log('🎉 Seeding Selesai! Seluruh data Master sukses diinput ke PostgreSQL secara aman.');
 }
 
 main()
@@ -162,8 +162,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    // Mematikan pool PostgreSQL secara graceful (dari file config)
-    // await prisma.$disconnect(); 
-    // Kita tidak perlu disconnect() manual di sini karena adapter-pg akan menutup koneksi secara otomatis saat proses Node.js selesai.
     process.exit(0);
   });

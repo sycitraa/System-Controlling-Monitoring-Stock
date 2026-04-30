@@ -1,0 +1,134 @@
+const express = require('express');
+const warehouseAreaController = require('../controllers/warehouseAreaController');
+const verifyToken = require('../middlewares/authMiddleware');
+const authorizeRoles = require('../middlewares/roleMiddleware');
+
+const router = express.Router();
+
+router.use(verifyToken);
+router.use(authorizeRoles('ADMIN'));
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Master Warehouse Area
+ *     description: API untuk mengelola Area Gudang
+ */
+
+/**
+ * @swagger
+ * /api/warehouse-areas:
+ *   get:
+ *     summary: Ambil semua area gudang
+ *     tags: [Master Warehouse Area]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Berhasil
+ */
+router.get('/', warehouseAreaController.getAreas);
+
+/**
+ * @swagger
+ * /api/warehouse-areas:
+ *   post:
+ *     summary: Tambah area baru
+ *     tags: [Master Warehouse Area]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               warehouse_area_number:
+ *                 type: string
+ *                 example: "WH-AREA-001"
+ *               warehouse_area_name:
+ *                 type: string
+ *                 example: "Transit"
+ *     responses:
+ *       201:
+ *         description: Berhasil
+ */
+router.post('/', warehouseAreaController.addArea);
+
+/**
+ * @swagger
+ * /api/warehouse-areas/{id}:
+ *   put:
+ *     summary: Update area gudang
+ *     tags: [Master Warehouse Area]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID area gudang
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               warehouse_area_number:
+ *                 type: string
+ *                 example: "WH-AREA-001"
+ *               warehouse_area_name:
+ *                 type: string
+ *                 example: "Transit"
+ *     responses:
+ *       200:
+ *         description: Berhasil
+ *       400:
+ *         description: Data tidak valid.
+ *       401:
+ *         description: Token tidak valid atau tidak tersedia.
+ *       403:
+ *         description: Akses ditolak karena role tidak sesuai.
+ *       404:
+ *         description: Area gudang tidak ditemukan.
+ *       500:
+ *         description: Terjadi kesalahan server.
+ */
+router.put('/:id', warehouseAreaController.updateArea);
+
+/**
+ * @swagger
+ * /api/warehouse-areas/{id}:
+ *   delete:
+ *     summary: Hapus area gudang
+ *     tags: [Master Warehouse Area]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID area gudang
+ *     responses:
+ *       200:
+ *         description: Berhasil
+ *       400:
+ *         description: Data tidak valid.
+ *       401:
+ *         description: Token tidak valid atau tidak tersedia.
+ *       403:
+ *         description: Akses ditolak karena role tidak sesuai.
+ *       404:
+ *         description: Area gudang tidak ditemukan.
+ *       500:
+ *         description: Terjadi kesalahan server.
+ */
+router.delete('/:id', warehouseAreaController.deleteArea);
+
+module.exports = router;

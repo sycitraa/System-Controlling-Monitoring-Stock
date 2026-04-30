@@ -10,6 +10,7 @@ const swaggerSpec = require('./config/swagger'); // Pastikan path ini benar meng
 // 2. Import Routes
 const authRoutes = require('./routes/authRoute');
 const userRoutes = require('./routes/userRoute'); 
+const warehouseAreaRoutes = require('./routes/warehouseAreaRoute'); // Import route untuk warehouse area
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // 4. Daftarkan Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/warehouse-areas', warehouseAreaRoutes);
 
 // Route dasar untuk testing
 app.get('/', (req, res) => {
