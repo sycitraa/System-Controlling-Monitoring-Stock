@@ -97,11 +97,11 @@ router.get('/', userController.getProfiles);
  *             properties:
  *               nama:
  *                 type: string
- *                 example: Staff Gudang
+ *                 example: Supervisor
  *               email:
  *                 type: string
  *                 format: email
- *                 example: staff@wms.com
+ *                 example: supervisor@wms.com
  *               password:
  *                 type: string
  *                 example: password123
@@ -130,11 +130,11 @@ router.get('/', userController.getProfiles);
  *                       example: 10
  *                     nama:
  *                       type: string
- *                       example: Staff Gudang
+ *                       example: Supervisor
  *                     email:
  *                       type: string
  *                       format: email
- *                       example: staff@wms.com
+ *                       example: supervisor@wms.com
  *                     id_role:
  *                       type: integer
  *                       example: 2
